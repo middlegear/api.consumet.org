@@ -14,14 +14,16 @@ RUN mkdir -p /home/nodejs/app/node_modules && chown -R nodejs:nodejs /home/nodej
 
 WORKDIR /home/nodejs/app
 
-# set default node env
+# set default node env and port
 ARG NODE_ENV=PROD
 ARG PORT=3000
+ARG REDIS_HOST
+ARG REDIS_PORT
+ARG REDIS_PASSWORD
 
-# ARG NODE_ENV=production
-# to be able to run tests (for example in CI), do not set production as environment
+# set environment variables with defaults
 ENV NODE_ENV=${NODE_ENV}
-ENV PORT=${PORT}
+ENV PORT=${PORT:-3000}
 ENV REDIS_HOST=${REDIS_HOST}
 ENV REDIS_PORT=${REDIS_PORT}
 ENV REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -46,14 +48,12 @@ COPY --chown=nodejs:nodejs . .
 # exposed port/s
 EXPOSE 3000
 
-# add an healthcheck, useful
-# healthcheck with curl, but not recommended
-# HEALTHCHECK CMD curl --fail http://localhost:3000/health || exit 1
-# healthcheck by calling the additional script exposed by the plugin
+# healthcheck - adjust the endpoint based on your API
+# Use /health if your API has a health endpoint, otherwise use /
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s \
-CMD curl --fail http://localhost:3000/ || exit 1
+CMD curl --fail http://localhost:$PORT/ || exit 1
 
-# ENTRYPOINT [ "node" ]
+# start the application
 CMD [ "npm", "start" ]
 
 # end.
